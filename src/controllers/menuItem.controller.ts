@@ -8,6 +8,7 @@ export class MenuItemController {
   static createMenuItem = async (req: Request, res: Response) => {
     //----> Get the cart item from the request.
     const newMenuItem = req.body as MenuItem;
+    
     //----> Store the new cart item in the database.
     const createdMenuItem = await MenuItemDb.createMenuItem(newMenuItem);
     //----> Send back the response.

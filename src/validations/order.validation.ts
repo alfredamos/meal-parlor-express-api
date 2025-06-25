@@ -2,11 +2,11 @@ import {z} from 'zod';
 
 export const orderSchema = z.object({
    id: z.string().optional(),
-  
-  totalQuantity: z.number(),
-  isShipped: z.boolean().optional(),
-  isDelivered: z.boolean().optional(),
-  totalPrice: z.number(), 
+  totalQuantity: z.number().optional(),
+  totalPrice: z.number().optional(), 
   userId: z.string(),
-  status: z.enum(['Delivered','Pending', 'Shipped'])
+  status: z.enum([ 'Cancelled',
+    'Completed',
+    'Confirmed',
+    'Pickup'])
 })

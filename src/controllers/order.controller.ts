@@ -10,6 +10,8 @@ export class OrderController {
     //----> Get the order info from the request body.
     const orderPayload = req.body as OrderPayload;
 
+    console.log({ orderPayload });
+
     //----> Store the new order info in the database.
     const createdOrder = await orderDb.createOrder(orderPayload);
 
@@ -85,5 +87,4 @@ export class OrderController {
     //----> Send back the response.
     res.status(StatusCodes.OK).json(order);
   };
-
 }
