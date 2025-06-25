@@ -12,17 +12,27 @@ export class UserDb {
     return deletedUser;
   }
 
-  static async detailUser(id: string): Promise<User> {
+  static async detailUser(id: string) {
+    //----> Get the user with given id from database.
     const user = await prisma.user.findUnique({ where: { id } });
 
+    //----> Check for null user.
     if (!user) {
       throw new Error(`User with id: ${id} is not found`);
     }
 
-    return user;
+    //----> Destructure the user.
+    const {password, ...rest} = user;
+
+    //----> Send back the result.
+    return rest;
   }
 
   static async getAllUsers(): Promise<User[]> {
-    return await prisma.user.findMany({});
+    //----> Map passwords of users to null.
+    const results = (await prisma.user.findMany({})).map(user => ({...user, password: ""}));
+  
+    //----> Send back the results.
+    return results
   }
 }

@@ -33,7 +33,7 @@ export class OrderController {
     const response = await orderDb.deleteAllOrders();
 
     //----> Send back the response.
-    res.status(StatusCodes.NO_CONTENT).json(response);
+    res.status(StatusCodes.OK).json(response);
   }
 
   static deleteOrderById = async (req: Request, res: Response) => {
