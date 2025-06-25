@@ -8,7 +8,7 @@ import { TokenJwt } from "../models/auth/TokenJwt";
 
 export async function ownerAndAdminMiddleware(req: Request, res: Response, next: NextFunction){
   //----> Get the order-id from params.
-  const { orderId } = req.params;
+  const { id } = req.params;
 
   //----> Get the user info from request.
   const user = req.user;
@@ -17,7 +17,7 @@ export async function ownerAndAdminMiddleware(req: Request, res: Response, next:
   //----> Check for admin-user.
   const isAdmin = isAdminRole(role);
 
-  const order = await orderDb.getOneOrder(orderId);
+  const order = await orderDb.getOneOrder(id);
 
   //----> Get the user-id attached to the order.
   const userIdFromOrder = order?.userId;

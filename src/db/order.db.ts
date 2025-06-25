@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import prisma from "./prisma.db";
+import { v4 as uuidv4 } from "uuid";
 import { OrderDetail, Order } from "@prisma/client";
 import catchError from "http-errors";
 import { OrderPayload } from "../models/orders/orderPayload.model";
@@ -9,20 +10,16 @@ export class OrderDb {
   constructor() {}
 
   async createOrder(orderPayLoad: OrderPayload) {
-    const { orderDetails, ...rest } = orderPayLoad;
-    //----> Get the total quantity and total price into order.
-    console.log("Before modifier");
-    const modifiedOrder = this.adjustTotalPriceAndTotalQuantity(
-      rest,
-      orderDetails
-    );
-    console.log("After modifier");
-    console.log({ modifiedOrder, orderDetails });
+    //----> Calculate the totalQuantity, totalPrice and make order paymentId.
+    const ordPayload = this.getTotalQuantityAndTotalPrice(orderPayLoad);
+
+    //----> Destructure ordPayload.
+    const { orderDetails, ...rest } = ordPayload;
+
     //----> Store the new order info in the database.
     const createdOrder = await prisma.order.create({
       data: {
-        ...modifiedOrder,
-        orderDate: new Date(),
+        ...rest,
         orderDetails: {
           create: orderDetails?.map((cart) => ({
             ...cart,
@@ -43,27 +40,27 @@ export class OrderDb {
   }
 
   async orderCreate(orderPayload: OrderPayload) {
-    console.log({ orderPayload });
+    //----> Calculate the totalQuantity, totalPrice and make order paymentId.
+    const ordPayload = this.getTotalQuantityAndTotalPrice(orderPayload);
 
-    const { orderDetails, ...rest } = orderPayload;
-
+    //----> Destructure ordPayload.
+    const { orderDetails, ...rest } = ordPayload;
+    
+    //----> Insert the order in the database.
     const createdOrder = await prisma.order.create({
       data: {
         ...rest,
       },
     });
 
-    const createdOrderDetails = await this.createOrderDetails(
+    //----> Insert the order-details in the database.
+    const newOrderDetails = await this.createBatchOrderDetails(
       orderDetails,
-      createdOrder?.id
+      createdOrder?.id,
     );
 
-    const payloadOfOrder: OrderPayload = {
-      ...createdOrder,
-      orderDetails: createdOrderDetails,
-    };
-
-    return payloadOfOrder;
+    //----> Send back the results.
+    return { createdOrder, orderDetails: newOrderDetails };
   }
 
   async deleteAllOrders() {
@@ -81,8 +78,6 @@ export class OrderDb {
   }
 
   async deleteOrderById(id: string) {
-    //----> Check for the existence of order in the database.
-    await this.getOrderById(id);
     //----> Delete all associated cart-items.
     await prisma.order.update({
       where: { id },
@@ -95,6 +90,7 @@ export class OrderDb {
         orderDetails: true,
       },
     });
+
     //----> Delete the order info from the database.
     const deletedOrder = await prisma.order.delete({ where: { id } });
 
@@ -113,13 +109,12 @@ export class OrderDb {
     const orders = await prisma.order.findMany({
       where: { userId: user?.id },
     });
+
     //----> Delete all these others in the database.
     this.allOrdersDeletedByUserId(orders, user?.id);
   }
 
   async editOrder(id: string, orderToEdit: Order) {
-    //----> Check for the existence of order in the db.
-    await this.getOrderById(id);
     //----> Store the edited order info in the database.
     const editedOrder = await prisma.order.update({
       where: { id },
@@ -152,7 +147,7 @@ export class OrderDb {
   }
 
   async getOneOrder(id: string) {
-    //----> Check for the existence of order in the db.
+    //----> Get the order in the db.
     const order = await this.getOrderById(id, true);
 
     return order;
@@ -160,36 +155,69 @@ export class OrderDb {
 
   private async getOrderById(id: string, include: boolean = false) {
     //----> Retrieve the order info with this id from database.
-    const order = await prisma.order.findUniqueOrThrow({
+    const order = await prisma.order.findUnique({
       where: { id },
       include: {
         orderDetails: include,
       },
     });
+
+    //---->Check for existence.
+    if (!order){
+      throw catchError(StatusCodes.NOT_FOUND, `Order with id : ${id}!`)
+    }
+
     //----> Send back a valid order.
     return order;
   }
 
-  private adjustTotalPriceAndTotalQuantity(
-    order: OrderModel,
-    orderDetails: OrderDetail[] = []
-  ): OrderModel {
-    console.log({ order, orderDetails });
-    //----> Calculate both the total cost and total quantity.
-    const totalQuantity = orderDetails?.reduce(
-      (acc, current) => acc + current.quantity,
-      0
-    );
-    const totalPrice = orderDetails?.reduce(
-      (acc, current) => acc + current.price * current.quantity,
-      0
-    );
-    //----> Adjust the total cost and total quantity on the order.
-    order.totalPrice = totalPrice;
-    order.totalQuantity = totalQuantity;
-    //----> Return the modified order.
-    return order;
+  private async createBatchOrderDetails(
+    orderDetails: OrderDetail[],
+    orderId: string,
+  ) {
+    //----> Include the order-id in the order-details.
+    const ordDetails = orderDetails.map((ordDet: OrderDetail) => ({
+      ...ordDet,
+      orderId,
+    }));
+
+    //----> Insert all the order-details in the database.
+    return await prisma.orderDetail.createMany({
+      data: [...ordDetails],
+      skipDuplicates: false,
+    });
   }
+
+  private getTotalQuantityAndTotalPrice(orderPayload: OrderPayload) {
+    const paymentId = uuidv4(); //----> Generate paymentId
+
+    const ordPayload = { ...orderPayload }; //----> Order payload temp.
+    ordPayload.paymentId = paymentId;
+
+    //----> Calculate totalQuantity.
+    const totalQuantity = orderPayload?.orderDetails?.reduce(
+      (accum, current) => accum + current.quantity,
+      0,
+    );
+
+    //----> Calculate totalQuantity and price.
+    const totalPrice = orderPayload?.orderDetails?.reduce(
+      (accum, current) => accum + current.quantity * current.price,
+      0,
+    );
+
+    //----> Total price.
+    ordPayload.totalPrice = totalPrice;
+
+    //----> Total quantity.
+    ordPayload.totalQuantity = totalQuantity;
+
+    //----> Order date.
+    ordPayload.orderDate = new Date();
+    //----> Send back the result.
+    return ordPayload;
+  }
+
 
   private allOrdersDeletedByUserId(orders: Order[], userId: string) {
     //----> Delete all orders by customerId
@@ -221,11 +249,11 @@ export class OrderDb {
     });
 
     //----> Collect all edited cart-items in Promise.all().
-    const updatedOrderorderDetails = Promise.all(createdCarItems);
+    const updatedOrderOrderDetails = Promise.all(createdCarItems);
 
     //----> Return the updated cart-items.
 
-    return updatedOrderorderDetails;
+    return updatedOrderOrderDetails;
   }
 }
 

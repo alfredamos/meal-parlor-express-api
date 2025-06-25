@@ -29,7 +29,7 @@ router
   .patch(
     cookieAuthenticationMiddleware,
     orderValidationMiddleware,
-    OrderController.createOrder,
+    OrderController.orderCreate,
   );
 
 router

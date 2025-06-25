@@ -10,8 +10,6 @@ export class OrderController {
     //----> Get the order info from the request body.
     const orderPayload = req.body as OrderPayload;
 
-    console.log({ orderPayload });
-
     //----> Store the new order info in the database.
     const createdOrder = await orderDb.createOrder(orderPayload);
 
@@ -56,8 +54,10 @@ export class OrderController {
     const { id } = req.params;
     //----> Get the order payload to edit from request.
     const orderToEdit = req.body as Order;
+
     //----> Store the edited order info in the database.
     const editedOrder = await orderDb.editOrder(id, orderToEdit);
+
     //----> Send back the response.
     res.status(StatusCodes.OK).json(editedOrder);
   };
@@ -73,6 +73,7 @@ export class OrderController {
   static getAllOrdersByUserId = async (req: Request, res: Response) => {
     //----> Get query params.
     const { userId } = req.params;
+   
     //----> Get all orders from the database.
     const allOrders = await orderDb.getAllOrdersByUserId(userId);
     //----> Send back the response.
@@ -81,6 +82,7 @@ export class OrderController {
 
   static getOrderById = async (req: Request, res: Response) => {
     const { id } = req.params;
+    console.log("In get-order, id : ", id)
     //----> Check for the existence of order in the db.
     const order = await orderDb.getOneOrder(id);
 
