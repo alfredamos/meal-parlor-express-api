@@ -28,6 +28,14 @@ export class OrderController {
     res.status(StatusCodes.CREATED).json(payloadOfOrder);
   };
 
+  static deleteAllOrders = async (_req: Request, res: Response) => {
+    //----> Delete all orders from the database.
+    const response = await orderDb.deleteAllOrders();
+
+    //----> Send back the response.
+    res.status(StatusCodes.NO_CONTENT).json(response);
+  }
+
   static deleteOrderById = async (req: Request, res: Response) => {
     //----> Get the order id from params.
     const { id } = req.params;

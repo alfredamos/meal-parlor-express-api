@@ -32,6 +32,14 @@ router
     OrderController.orderCreate,
   );
 
+  router
+    .route("/delete-all-orders")
+    .delete(
+      cookieAuthenticationMiddleware,
+      cookieAdminMiddleware,
+      OrderController.deleteAllOrders
+    );
+
 router
   .route("/:id")
   .delete(
@@ -67,12 +75,6 @@ router
     OrderController.deleteOrdersByUserId,
   );
 
-router
-  .route("/delete-all-orders")
-  .delete(
-    cookieAuthenticationMiddleware,
-    cookieAdminMiddleware,
-    OrderController.deleteOrdersByUserId,
-  );
+
 
 export default router;

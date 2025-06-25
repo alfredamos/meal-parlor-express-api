@@ -58,7 +58,7 @@ export class AuthController {
     })  
     console.log("I have logout!!!")
     //----> Return the default value of user-credentials.
-    res.status(StatusCodes.OK).json(initialUserCredential);
+    res.status(StatusCodes.OK).json({ status: "success", message: "You are logged out successfully!", user: initialUserCredential});
   }
 
   static signup = async (req: Request, res: Response) => {
