@@ -5,9 +5,13 @@ import { isAdminRole } from "../utils/isAdminRole";
 import { UuidTool } from "uuid-tool";
 import { TokenJwt } from "../models/auth/TokenJwt";
 
-export function sameUserAndAdminMiddleware(req: Request, res: Response, next: NextFunction){
+export function sameUserAndAdminMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   //----> Get the order-id from params.
-  const { userId } = req.params;
+  const { id: userId } = req.params;
 
   //----> Get the user info from request.
   const user = req.user;
