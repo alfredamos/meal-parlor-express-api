@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 import { OrderDetail, Order } from "@prisma/client";
 import catchError from "http-errors";
 import { OrderPayload } from "../models/orders/orderPayload.model";
-import { OrderModel } from "../models/orders/orderModel.model";
 
 export class OrderDb {
   constructor() {}
@@ -112,6 +111,12 @@ export class OrderDb {
 
     //----> Delete all these others in the database.
     this.allOrdersDeletedByUserId(orders, user?.id);
+
+    //----> Send back the response.
+    return {
+      status: "success",
+      message: "All orders are deleted successfully!",
+    };
   }
 
   async editOrder(id: string, orderToEdit: Order) {
@@ -218,7 +223,6 @@ export class OrderDb {
     return ordPayload;
   }
 
-
   private allOrdersDeletedByUserId(orders: Order[], userId: string) {
     //----> Delete all orders by customerId
     const userOrders = orders?.filter((order) => order.userId === userId);
@@ -240,21 +244,5 @@ export class OrderDb {
     });
   }
 
-  private createOrderDetails(orderDetails: OrderDetail[], orderId: string) {
-    //----> Edit all cart-items at once.
-    const createdCarItems = orderDetails.map(async (cart) => {
-      return await prisma.orderDetail.create({
-        data: { ...cart, orderId },
-      });
-    });
-
-    //----> Collect all edited cart-items in Promise.all().
-    const updatedOrderOrderDetails = Promise.all(createdCarItems);
-
-    //----> Return the updated cart-items.
-
-    return updatedOrderOrderDetails;
-  }
 }
-
 export const orderDb = new OrderDb();
