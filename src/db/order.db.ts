@@ -142,7 +142,7 @@ export class OrderDb {
 
     //----> Check for existence of orders.
     if (!allOrders.length) {
-      throw catchError("Orders are not available for this user!");
+      throw catchError("Orders are not available!");
     }
 
     return allOrders;
