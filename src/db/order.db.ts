@@ -109,6 +109,11 @@ export class OrderDb {
       where: { userId: user?.id },
     });
 
+    //----> Check for existence of orders.
+    if (!orders.length) {
+      throw catchError(StatusCodes.NOT_FOUND, "Orders are not available for this user!");
+    }
+
     //----> Delete all these others in the database.
     this.allOrdersDeletedByUserId(orders, user?.id);
 
@@ -135,6 +140,11 @@ export class OrderDb {
       include: { orderDetails: true, user: true },
     });
 
+    //----> Check for existence of orders.
+    if (!allOrders.length) {
+      throw catchError("Orders are not available for this user!");
+    }
+
     return allOrders;
   }
 
@@ -147,6 +157,11 @@ export class OrderDb {
         user: true,
       },
     });
+
+    //----> Check for existence of orders.
+    if (!allOrders.length) {
+      throw catchError("Orders are not available for this user!");
+    }
 
     return allOrders;
   }
