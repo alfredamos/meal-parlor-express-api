@@ -67,7 +67,12 @@ export class OrderDb {
     await prisma.orderDetail.deleteMany({});
 
     //----> Delete all orders.
-    await prisma.order.deleteMany({});
+    const numberOfOrders = (await prisma.order.deleteMany({})).count;
+
+    //----> Check for existence of orders.
+    if (!numberOfOrders) {
+      throw catchError(StatusCodes.NOT_FOUND, "Orders are not available for deletion!");
+    }
 
     //----> Send back the response.
     return {
